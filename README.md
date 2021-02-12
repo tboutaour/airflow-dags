@@ -1,5 +1,5 @@
 <h1> Airflow DAGS example.</h1>
-Simple ETL pipeline example. It only has didactic purposes.
+Simple ETL pipeline example. It only has didactic purposes. Not configured for production environment.
 
 <h2> Dependencies</h2>
 
@@ -11,13 +11,13 @@ Simple ETL pipeline example. It only has didactic purposes.
 Types of available deployments:
 - Airflow deployment with CeleryExecutor
 
-Use Helm to deploy all the Airflow configuration.
+Use Helm to deploy all Airflow configuration.
 
 Add Airflow chart repository if not installed:
 
 ``helm repo add airflow-stable https://airflow-helm.github.io/charts`` and ``helm repo update``
 
-To install the Airflow Chart into your Kubernetes cluster:
+To install the Airflow chart into your Kubernetes cluster:
 
 ``helm install airflow --namespace airflow airflow-stable/airflow --values [CELERY YAML]``
 

@@ -21,8 +21,6 @@ with DAG('etl_dag',
         labels={"foo": "bar"},
         name="extract-tranform",
         task_id="extract-tranform",
-        volumes=[],
-        volume_mounts=[],
         get_logs=True
     )
 
