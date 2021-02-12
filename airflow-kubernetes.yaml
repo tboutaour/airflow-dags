@@ -1,0 +1,79 @@
+airflow:
+  image:
+     repository: damavis/airflow
+     tag: latest
+  executor: Kubernetes
+  service:
+    type: LoadBalancer
+  config:
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: true
+    AIRFLOW__WEBSERVER__LOG_FETCH_TIMEOUT_SEC: 10
+    AIRFLOW__CORE__LOGGING_LEVEL: DEBUG
+    AIRFLOW__CORE__FAB_LOGGING_LEVEL: DEBUG
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:airflow@airflow-postgresql:5432/airflow
+    AIRFLOW__KUBERNETES__WORKER_CONTAINER_REPOSITORY: airflow-docker-local
+    AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG: 1
+    AIRFLOW__KUBERNETES__WORKER_CONTAINER_IMAGE_PULL_POLICY: Never
+    AIRFLOW__KUBERNETES__DELETE_WORKER_PODS: true
+    AIRFLOW__KUBERNETES__WORKER_SERVICE_ACCOUNT_NAME: airflow
+    AIRFLOW__KUBERNETES__NAMESPACE: airflow
+    AIRFLOW__KUBERNETES__KUBE_CLIENT_REQUEST_ARGS: '{\"_request_timeout\":[60,60]}'
+    AIRFLOW__KUBERNETES__GIT_REPO: https://github.com/damavis/airflow-dags.git
+    AIRFLOW__KUBERNETES__GIT_BRANCH: master
+    AIRFLOW__KUBERNETES__LOGS_VOLUME_CLAIM: airflow-logs
+    AIRFLOW__KUBERNETES__GIT_SYNC_ROOT: /git
+    AIRFLOW__KUBERNETES__GIT_DAGS_FOLDER_MOUNT_POINT: /opt/airflow
+    AIRFLOW__KUBERNETES__GIT_SYNC_DEST: dags
+    AIRFLOW__KUBERNETES__GIT_SYNC_CONTAINER_TAG: v3.1.2
+
+dags:
+  path: /opt/airflow/dags
+  doNotPickle: false
+
+  git:
+    url: https://github.com/tboutaour/airflow-dags
+    ref: master
+    secret: ""
+    sshKeyscan: false
+    repoHost: ""
+    repoPort: 22
+    privateKeyName: id_rsa
+    gitSync:
+      enabled: true
+      image:
+        repository: alpine/git
+        tag: 1.0.12
+        pullPolicy: IfNotPresent
+      refreshTime: 60
+      resources: {}
+  initContainer:
+    enabled: true
+    image:
+      repository: alpine/git
+      tag: 1.0.12
+      pullPolicy: IfNotPresent
+    installRequirements: true
+    mountPath: "/git"
+    syncSubPath: ""
+
+logs:
+  path: /usr/local/airflow/logs
+logsPersistence:
+  enabled: true
+  accessMode: ReadWriteMany
+  size: 1Gi
+
+persistence:
+  enabled: false
+
+workers:
+  enabled: false
+
+postgresql:
+  enabled: true
+
+redis:
+  enabled: false
+
+flower:
+  enabled: false
