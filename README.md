@@ -8,7 +8,7 @@ Simple ETL pipeline example. It only has didactic purposes.
 
 <h2> Deployments </h2>
 
-Types of availables deployments:
+Types of available deployments:
 - Airflow deployment with CeleryExecutor
 
 Use Helm to deploy all the Airflow configuration.
