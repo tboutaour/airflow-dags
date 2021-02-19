@@ -1,79 +1,230 @@
+###################################
+# Airflow - Common Configs
+###################################
 airflow:
   image:
-     repository: damavis/airflow
-     tag: latest
-  executor: Kubernetes
+    repository: apache/airflow
+    tag: 1.10.14-python3.6
+    pullPolicy: IfNotPresent
+    pullSecret: ""
+  executor: KubernetesExecutor
+  fernetKey: "7T512UXSSmBOkpWimFHIVb8jK6lfmSAvx4mO6Arehnc="
+  config:     
+    AIRFLOW__CORE__DAGS_FOLDER: "/repo/dags"
+    AIRFLOW__KUBERNETES__WORKER_CONTAINER_IMAGE_PULL_POLICY: "Never"
+    AIRFLOW__KUBERNETES__DELETE_WORKER_PODS: "False"
+    AIRFLOW__KUBERNETES__KUBE_CLIENT_REQUEST_ARGS: ""
+    AIRFLOW__KUBERNETES__LOGS_VOLUME_CLAIM: "airflow-logs"
+
+    AIRFLOW__KUBERNETES__GIT_REPO: "https://github.com/damavis/airflow-dags.git"
+    AIRFLOW__KUBERNETES__GIT_BRANCH: "feature/Airflow-with-kubernetes-executor"
+    AIRFLOW__KUBERNETES__GIT_DAGS_FOLDER_MOUNT_POINT: "/repo"
+    
+    AIRFLOW__KUBERNETES__GIT_SYNC_ROOT: "/git"
+    AIRFLOW__KUBERNETES__GIT_SYNC_DEST: "dags"
+    AIRFLOW__KUBERNETES__GIT_SYNC_CONTAINER_TAG: "v3.1.2"
+
+  podAnnotations: {}
+  extraEnv: []
+  extraConfigmapMounts: []
+  extraContainers: []
+  extraPipPackages: []
+  extraVolumeMounts: []
+  extraVolumes: []
+
+
+###################################
+# Airflow - Scheduler Configs
+###################################
+scheduler:
+  resources: {}
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  securityContext: {}
+  labels: {}
+  podLabels: {}
+  annotations: {}
+  podAnnotations: {}
+  safeToEvict: true
+  podDisruptionBudget:
+    enabled: true
+    maxUnavailable: "100%"
+    minAvailable: ""
+  connections: []
+  refreshConnections: true
+  existingSecretConnections: ""
+  variables: |
+    {}
+  pools: |
+    {}
+  numRuns: -1
+  initdb: true
+  preinitdb: false
+  initialStartupDelay: 0
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 300
+    periodSeconds: 30
+    failureThreshold: 5
+  secretsDir: /var/airflow/secrets
+  secrets: []
+  secretsMap: ""
+  extraInitContainers: []
+
+###################################
+# Airflow - WebUI Configs
+###################################
+web:
+  replicas: 1
+  safeToEvict: true
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: ""
+    minAvailable: ""
   service:
-    type: LoadBalancer
-  config:
-    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: true
-    AIRFLOW__WEBSERVER__LOG_FETCH_TIMEOUT_SEC: 10
-    AIRFLOW__CORE__LOGGING_LEVEL: DEBUG
-    AIRFLOW__CORE__FAB_LOGGING_LEVEL: DEBUG
-    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:airflow@airflow-postgresql:5432/airflow
-    AIRFLOW__KUBERNETES__WORKER_CONTAINER_REPOSITORY: airflow-docker-local
-    AIRFLOW__KUBERNETES__WORKER_CONTAINER_TAG: 1
-    AIRFLOW__KUBERNETES__WORKER_CONTAINER_IMAGE_PULL_POLICY: Never
-    AIRFLOW__KUBERNETES__DELETE_WORKER_PODS: true
-    AIRFLOW__KUBERNETES__WORKER_SERVICE_ACCOUNT_NAME: airflow
-    AIRFLOW__KUBERNETES__NAMESPACE: airflow
-    AIRFLOW__KUBERNETES__KUBE_CLIENT_REQUEST_ARGS: '{\"_request_timeout\":[60,60]}'
-    AIRFLOW__KUBERNETES__GIT_REPO: https://github.com/damavis/airflow-dags.git
-    AIRFLOW__KUBERNETES__GIT_BRANCH: master
-    AIRFLOW__KUBERNETES__LOGS_VOLUME_CLAIM: airflow-logs
-    AIRFLOW__KUBERNETES__GIT_SYNC_ROOT: /git
-    AIRFLOW__KUBERNETES__GIT_DAGS_FOLDER_MOUNT_POINT: /opt/airflow
-    AIRFLOW__KUBERNETES__GIT_SYNC_DEST: dags
-    AIRFLOW__KUBERNETES__GIT_SYNC_CONTAINER_TAG: v3.1.2
+    sessionAffinity: "None"
+    type: ClusterIP
+    externalPort: 8080
+    loadBalancerIP: ""
+    nodePort:
+      http: ""
+  baseUrl: "http://localhost:8080"
+  serializeDAGs: false
+  initialStartupDelay: 0
+  minReadySeconds: 5
+  readinessProbe:
+    enabled: false
+    scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+  livenessProbe:
+    enabled: true
+    scheme: HTTP
+    initialDelaySeconds: 300
+    periodSeconds: 30
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 2
+  secretsDir: /var/airflow/secrets
+  secretsMap: ""
 
+###################################
+# Airflow - Logs Configs
+###################################
+logs:
+  path: /usr/local/airflow/logs
+  persistence:
+    enabled: true
+    existingClaim: ""
+    subPath: ""
+    storageClass: ""
+    accessMode: ReadWriteMany
+    size: 1Gi
+
+###################################
+# Airflow - DAGs Configs
+###################################
 dags:
-  path: /opt/airflow/dags
+  path: /repo/dags
   doNotPickle: false
-
+  installRequirements: true
+  persistence:
+    enabled: false
   git:
     url: https://github.com/tboutaour/airflow-dags
-    ref: master
+    ref: feature/Airflow-with-kubernetes-executor
     secret: ""
     sshKeyscan: false
+    privateKeyName: id_rsa
     repoHost: ""
     repoPort: 22
-    privateKeyName: id_rsa
     gitSync:
-      enabled: true
+      enabled: false
+      resources: {}
       image:
         repository: alpine/git
         tag: 1.0.12
         pullPolicy: IfNotPresent
       refreshTime: 60
-      resources: {}
+
   initContainer:
     enabled: true
+    resources: {}
     image:
       repository: alpine/git
       tag: 1.0.12
       pullPolicy: IfNotPresent
-    installRequirements: true
     mountPath: "/git"
     syncSubPath: ""
 
-logs:
-  path: /usr/local/airflow/logs
-logsPersistence:
-  enabled: true
-  accessMode: ReadWriteMany
-  size: 1Gi
+ingress:
+  enabled: false
 
-persistence:
+
+###################################
+# Kubernetes - RBAC
+###################################
+rbac:
+  create: true
+  events: false
+
+###################################
+# Kubernetes - Service Account
+###################################
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+extraManifests: []
+
+###################################
+# Database - PostgreSQL Chart
+# - https://github.com/helm/charts/tree/master/stable/postgresql
+###################################
+postgresql:
+  enabled: true
+  postgresqlDatabase: airflow
+  postgresqlUsername: postgres
+  postgresqlPassword: airflow
+  existingSecret: ""
+  existingSecretKey: "postgresql-password"
+  persistence:
+    enabled: false
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+  master:
+    podAnnotations:
+      cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+###################################
+# Database - External Database
+# - these configs are only used when `redis.enabled` is false
+###################################
+externalRedis:
+  host: localhost
+  port: 6379
+  databaseNumber: 1
+  passwordSecret: ""
+  passwordSecretKey: "redis-password"
+
+serviceMonitor:
+  enabled: false
+
+prometheusRule:
   enabled: false
 
 workers:
   enabled: false
-
-postgresql:
-  enabled: true
-
-redis:
+  
+flower:
   enabled: false
 
-flower:
+redis:
   enabled: false
